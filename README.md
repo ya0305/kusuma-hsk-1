@@ -1,4 +1,3 @@
-<!DOCTYPE html>
 <html lang="id">
 <head>
     <meta charset="UTF-8">
@@ -364,7 +363,8 @@
             document.getElementById('examContainer').style.display = 'block';
             
             // Load Google Form dengan URL yang sudah di-hardcode
-            document.getElementById('examFrame').src = GOOGLE_FORM_URL;
+            document.getElementById('examFrame').src = (https://docs.google.com/forms/d/e/1FAIpQLSfUbsIWpYyWydQ2DLIrey7nzau05c-EXBWzAlDcgU1bd-OLTg/viewform?usp=header);
+);
             
             // Mulai semua sistem keamanan
             initializeSecuritySystems();
