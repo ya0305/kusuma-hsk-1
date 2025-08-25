@@ -1,3 +1,4 @@
+<!DOCTYPE html>
 <html lang="id">
 <head>
     <meta charset="UTF-8">
@@ -245,30 +246,19 @@
         .pulse {
             animation: pulse 1s infinite;
         }
-
-        /* Prevent text selection */
-        * {
-            -webkit-user-select: none;
-            -moz-user-select: none;
-            -ms-user-select: none;
-            user-select: none;
-        }
-
-        /* Allow scrolling */
     </style>
 </head>
 <body>
     <div class="container" id="setupContainer">
-        <div class="logo">🔒 UJIAN TERKUNCI</div>
-        <div class="subtitle">Sistem Ujian Online dengan Keamanan Maksimal</div>
+        <div class="logo">📝 UJIAN ONLINE</div>
+        <div class="subtitle">Sistem Ujian dengan Timer dan Lock Screen</div>
         
         <div class="warning">
-            <strong>⚠️ PERINGATAN KERAS:</strong>
-            • Setelah ujian dimulai, Anda TIDAK DAPAT keluar dengan cara APAPUN<br>
-            • DILARANG menutup browser, tab, atau keluar dari fullscreen<br>
-            • DILARANG menggunakan shortcut keyboard apapun<br>
-            • Sistem akan memaksa Anda tetap dalam mode ujian<br>
-            • Pastikan Anda siap 100% sebelum memulai!
+            <strong>⚠️ PERHATIAN:</strong>
+            • Setelah ujian dimulai, Anda tidak dapat keluar dari layar ujian<br>
+            • Pastikan koneksi internet stabil sebelum memulai<br>
+            • Pilih durasi ujian dengan hati-hati<br>
+            • Kerjakan dengan tenang dan fokus
         </div>
 
         <div class="form-group">
@@ -283,13 +273,13 @@
             </div>
         </div>
 
-        <button class="start-btn" id="startExam" disabled>🚀 MULAI UJIAN SEKARANG</button>
+        <button class="start-btn" id="startExam" disabled>🚀 MULAI UJIAN</button>
     </div>
 
     <div class="exam-container" id="examContainer">
         <div class="exam-header">
             <div class="exam-title">
-                🔒 UJIAN BERLANGSUNG - MODE TERKUNCI
+                📝 UJIAN BERLANGSUNG
             </div>
             <div class="timer" id="timer">00:00:00</div>
         </div>
@@ -298,19 +288,18 @@
 
     <div class="time-warning" id="timeWarning">
         <div class="pulse">
-            ⚠️ PERINGATAN!<br>
-            WAKTU TERSISA 5 MENIT!<br>
-            SEGERA SELESAIKAN UJIAN ANDA!
+            ⚠️ WAKTU TERSISA 5 MENIT!<br>
+            SEGERA SELESAIKAN UJIAN!
         </div>
     </div>
 
     <div class="lock-screen" id="lockScreen">
         <div class="lock-content">
             <div class="lock-icon">🔒</div>
-            <h2>AKSES DITOLAK!</h2>
-            <p>Anda tidak dapat keluar dari mode ujian.<br>
-            Sistem telah mendeteksi percobaan keluar.<br>
-            <strong>LANJUTKAN MENGERJAKAN UJIAN ANDA!</strong></p>
+            <h2>UJIAN BERLANGSUNG</h2>
+            <p>Mohon fokus pada ujian Anda.<br>
+            Sistem telah mendeteksi aktivitas yang tidak diizinkan.<br>
+            <strong>Silakan lanjutkan mengerjakan soal.</strong></p>
         </div>
     </div>
 
@@ -324,12 +313,7 @@
         let examStarted = false;
         let preventExit = false;
         let lockScreenTimeout;
-        let forceFullscreenInterval;
-
-        // Disable drag and drop
-        document.addEventListener('dragstart', e => e.preventDefault());
-        document.addEventListener('drop', e => e.preventDefault());
-        document.addEventListener('dragover', e => e.preventDefault());
+        let isSetupPhase = true;
 
         // Pilih durasi ujian
         document.querySelectorAll('.duration-option').forEach(option => {
@@ -344,194 +328,151 @@
 
         // Mulai ujian
         document.getElementById('startExam').addEventListener('click', () => {
-            const confirmMessage = `PERINGATAN TERAKHIR!\n\nAnda akan memulai ujian selama ${selectedDuration} menit.\nSetelah dimulai, Anda TIDAK DAPAT keluar dari sistem dengan cara APAPUN!\n\nApakah Anda benar-benar yakin ingin melanjutkan?`;
+            const confirmMessage = `Anda akan memulai ujian selama ${selectedDuration} menit.\nSetelah dimulai, sistem akan mengaktifkan mode pengawasan.\n\nLanjutkan?`;
             
             if (confirm(confirmMessage)) {
-                if (confirm('Ini adalah konfirmasi terakhir. Setelah ini Anda akan TERKUNCI dalam sistem ujian. Lanjutkan?')) {
-                    startExam();
-                }
+                startExam();
             }
         });
 
         function startExam() {
+            isSetupPhase = false;
             examStarted = true;
-            preventExit = true;
             remainingTime = selectedDuration * 60;
             
             // Sembunyikan setup dan tampilkan ujian
             document.getElementById('setupContainer').style.display = 'none';
             document.getElementById('examContainer').style.display = 'block';
             
-            // Load Google Form dengan URL yang sudah di-hardcode
-            document.getElementById('examFrame').src = (https://docs.google.com/forms/d/e/1FAIpQLSfUbsIWpYyWydQ2DLIrey7nzau05c-EXBWzAlDcgU1bd-OLTg/viewform?usp=header);
-);
-            
-            // Mulai semua sistem keamanan
-            initializeSecuritySystems();
+            // Load Google Form
+            document.getElementById('examFrame').src = [GOOGLE_FORM_URL](https://docs.google.com/forms/d/e/1FAIpQLSfUbsIWpYyWydQ2DLIrey7nzau05c-EXBWzAlDcgU1bd-OLTg/viewform?usp=header);
             
             // Mulai timer
             startTimer();
             
-            // Force fullscreen
-            enterFullscreen();
-            
-            // Monitor fullscreen setiap 100ms
-            forceFullscreenInterval = setInterval(() => {
-                if (!isFullscreen() && examStarted) {
-                    enterFullscreen();
-                    showLockScreen("Mencoba keluar dari fullscreen!");
-                }
-            }, 100);
+            // Tunggu 3 detik sebelum mengaktifkan sistem keamanan
+            setTimeout(() => {
+                preventExit = true;
+                initializeSecuritySystems();
+                enterFullscreen();
+            }, 3000);
         }
 
         function initializeSecuritySystems() {
-            // Disable semua event yang bisa digunakan untuk keluar
+            // Monitor key combinations yang berbahaya
             document.addEventListener('keydown', handleKeyDown, true);
-            document.addEventListener('keyup', handleKeyUp, true);
-            document.addEventListener('keypress', handleKeyPress, true);
             
-            // Monitor visibility
-            document.addEventListener('visibilitychange', handleVisibilityChange, true);
+            // Monitor visibility changes
+            document.addEventListener('visibilitychange', handleVisibilityChange);
             
             // Prevent browser navigation
-            window.addEventListener('beforeunload', handleBeforeUnload, true);
-            window.addEventListener('unload', handleUnload, true);
+            window.addEventListener('beforeunload', handleBeforeUnload);
             
             // Disable context menu
             document.addEventListener('contextmenu', e => {
-                e.preventDefault();
-                e.stopPropagation();
-                showLockScreen("Mencoba membuka context menu!");
-                return false;
-            }, true);
-            
-            // Monitor window blur/focus
-            window.addEventListener('blur', () => {
-                if (examStarted && preventExit) {
-                    showLockScreen("Mencoba beralih window!");
-                    window.focus();
+                if (preventExit) {
+                    e.preventDefault();
+                    showLockScreen("Context menu diblokir selama ujian");
+                    return false;
                 }
-            }, true);
+            });
+            
+            // Monitor window focus
+            window.addEventListener('blur', handleWindowBlur);
             
             // Prevent back button
             window.history.pushState(null, null, window.location.href);
-            window.addEventListener('popstate', () => {
-                if (preventExit) {
-                    window.history.pushState(null, null, window.location.href);
-                    showLockScreen("Mencoba menggunakan tombol back!");
-                }
-            }, true);
+            window.addEventListener('popstate', handlePopState);
             
-            // Monitor fullscreen changes
-            ['fullscreenchange', 'webkitfullscreenchange', 'mozfullscreenchange', 'MSFullscreenChange'].forEach(event => {
-                document.addEventListener(event, () => {
-                    if (!isFullscreen() && examStarted && preventExit) {
-                        setTimeout(() => {
-                            enterFullscreen();
-                            showLockScreen("Mencoba keluar dari fullscreen!");
-                        }, 50);
-                    }
-                }, true);
+            // Monitor fullscreen
+            ['fullscreenchange', 'webkitfullscreenchange', 'mozfullscreenchange'].forEach(event => {
+                document.addEventListener(event, handleFullscreenChange);
             });
-            
-            // Override console methods
-            overrideConsole();
-            
-            // Start developer tools detection
-            startDevToolsDetection();
         }
 
         function handleKeyDown(e) {
-            if (!examStarted) return;
+            if (!preventExit) return;
             
             const key = e.key.toLowerCase();
-            const code = e.code.toLowerCase();
             
-            // List semua key yang dilarang
-            const forbiddenKeys = [
-                'f1', 'f2', 'f3', 'f4', 'f5', 'f6', 'f7', 'f8', 'f9', 'f10', 'f11', 'f12',
-                'escape', 'tab', 'printscreen', 'insert', 'delete', 'home', 'end', 'pageup', 'pagedown'
+            // Hanya blokir kombinasi yang benar-benar berbahaya
+            const dangerousCombinations = [
+                // Function keys
+                ['f5'], ['f11'], ['f12'],
+                // Alt combinations
+                ['alt', 'tab'], ['alt', 'f4'],
+                // Ctrl combinations yang berbahaya
+                ['ctrl', 'w'], ['ctrl', 'n'], ['ctrl', 't'], ['ctrl', 'r'], 
+                ['ctrl', 'shift', 'i'], ['ctrl', 'shift', 'j'], ['ctrl', 'u']
             ];
             
-            // Block function keys dan keys khusus
-            if (forbiddenKeys.includes(key) || forbiddenKeys.includes(code)) {
-                e.preventDefault();
-                e.stopPropagation();
-                e.stopImmediatePropagation();
-                showLockScreen(`Mencoba menggunakan tombol ${key.toUpperCase()}!`);
-                return false;
+            let isDangerous = false;
+            
+            // Check F5 dan F11
+            if (key === 'f5' || key === 'f11' || key === 'f12') {
+                isDangerous = true;
             }
             
-            // Block semua kombinasi dengan Ctrl
+            // Check Alt+Tab
+            if (e.altKey && key === 'tab') {
+                isDangerous = true;
+            }
+            
+            // Check Ctrl combinations
             if (e.ctrlKey) {
-                e.preventDefault();
-                e.stopPropagation();
-                e.stopImmediatePropagation();
-                showLockScreen("Mencoba menggunakan shortcut Ctrl!");
-                return false;
-            }
-            
-            // Block semua kombinasi dengan Alt
-            if (e.altKey) {
-                e.preventDefault();
-                e.stopPropagation();
-                e.stopImmediatePropagation();
-                showLockScreen("Mencoba menggunakan shortcut Alt!");
-                return false;
-            }
-            
-            // Block Windows/Cmd key
-            if (e.metaKey) {
-                e.preventDefault();
-                e.stopPropagation();
-                e.stopImmediatePropagation();
-                showLockScreen("Mencoba menggunakan Windows/Cmd key!");
-                return false;
-            }
-            
-            return false;
-        }
-
-        function handleKeyUp(e) {
-            if (examStarted) {
-                e.preventDefault();
-                e.stopPropagation();
-                return false;
-            }
-        }
-
-        function handleKeyPress(e) {
-            if (examStarted) {
-                // Allow normal typing for form input
-                if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') {
-                    return true;
+                const ctrlKeys = ['w', 'n', 't', 'r', 'u'];
+                if (ctrlKeys.includes(key)) {
+                    isDangerous = true;
                 }
+                if (e.shiftKey && (key === 'i' || key === 'j')) {
+                    isDangerous = true;
+                }
+            }
+            
+            if (isDangerous) {
+                e.preventDefault();
+                e.stopPropagation();
+                showLockScreen("Shortcut tidak diizinkan selama ujian");
+                return false;
             }
         }
 
         function handleVisibilityChange() {
-            if (document.hidden && examStarted && preventExit) {
-                showLockScreen("Mencoba beralih tab/window!");
-                // Force focus back
+            if (document.hidden && preventExit) {
+                showLockScreen("Jangan beralih tab selama ujian");
+            }
+        }
+
+        function handleWindowBlur() {
+            if (preventExit) {
                 setTimeout(() => {
                     window.focus();
+                    showLockScreen("Tetap fokus pada ujian");
                 }, 100);
             }
         }
 
         function handleBeforeUnload(e) {
             if (preventExit) {
-                showLockScreen("Mencoba menutup halaman!");
                 e.preventDefault();
                 e.returnValue = 'Ujian sedang berlangsung!';
                 return 'Ujian sedang berlangsung!';
             }
         }
 
-        function handleUnload(e) {
+        function handlePopState() {
             if (preventExit) {
-                e.preventDefault();
-                return false;
+                window.history.pushState(null, null, window.location.href);
+                showLockScreen("Tombol back tidak berfungsi selama ujian");
+            }
+        }
+
+        function handleFullscreenChange() {
+            if (!isFullscreen() && preventExit) {
+                setTimeout(() => {
+                    enterFullscreen();
+                    showLockScreen("Mode fullscreen diperlukan");
+                }, 500);
             }
         }
 
@@ -547,19 +488,7 @@
                     document.getElementById('timeWarning').style.display = 'block';
                     setTimeout(() => {
                         document.getElementById('timeWarning').style.display = 'none';
-                    }, 15000);
-                }
-                
-                // Peringatan 1 menit tersisa
-                if (remainingTime === 60) {
-                    document.getElementById('timeWarning').innerHTML = `
-                        <div class="pulse">
-                            🚨 WAKTU HAMPIR HABIS!<br>
-                            TERSISA 1 MENIT!<br>
-                            SUBMIT SEKARANG!
-                        </div>
-                    `;
-                    document.getElementById('timeWarning').style.display = 'block';
+                    }, 10000);
                 }
                 
                 // Waktu habis
@@ -587,19 +516,14 @@
 
         function endExam() {
             clearInterval(timerInterval);
-            clearInterval(forceFullscreenInterval);
+            preventExit = false;
+            examStarted = false;
             
-            document.getElementById('timeWarning').style.display = 'none';
+            alert('⏰ WAKTU UJIAN TELAH HABIS!\n\nSilakan submit jawaban Anda jika belum!');
             
-            // Show final warning
-            alert('⏰ WAKTU UJIAN TELAH HABIS!\n\nSilakan submit jawaban Anda SEKARANG jika belum!\nSetelah itu sistem akan otomatis keluar.');
-            
-            // Give 30 seconds for submission
+            // Beri waktu 30 detik untuk submit
             setTimeout(() => {
-                preventExit = false;
-                examStarted = false;
-                
-                if (confirm('Ujian telah selesai. Klik OK untuk keluar dari sistem ujian.')) {
+                if (confirm('Ujian selesai. Keluar dari sistem?')) {
                     exitFullscreen();
                     window.location.href = 'about:blank';
                 }
@@ -614,8 +538,6 @@
                 elem.webkitRequestFullscreen();
             } else if (elem.msRequestFullscreen) {
                 elem.msRequestFullscreen();
-            } else if (elem.mozRequestFullScreen) {
-                elem.mozRequestFullScreen();
             }
         }
 
@@ -626,8 +548,6 @@
                 document.webkitExitFullscreen();
             } else if (document.msExitFullscreen) {
                 document.msExitFullscreen();
-            } else if (document.mozCancelFullScreen) {
-                document.mozCancelFullScreen();
             }
         }
 
@@ -636,94 +556,33 @@
                      document.msFullscreenElement || document.mozFullScreenElement);
         }
 
-        function showLockScreen(reason = "Percobaan keluar terdeteksi!") {
-            const lockScreen = document.getElementById('lockScreen');
-            lockScreen.style.display = 'flex';
+        function showLockScreen(message = "Mohon fokus pada ujian") {
+            if (!preventExit) return; // Jangan tampilkan jika ujian belum mulai
             
-            // Update reason
-            lockScreen.querySelector('h2').textContent = "🚨 " + reason;
+            const lockScreen = document.getElementById('lockScreen');
+            lockScreen.querySelector('p').innerHTML = `${message}<br><strong>Silakan lanjutkan mengerjakan soal.</strong>`;
+            lockScreen.style.display = 'flex';
             
             // Clear existing timeout
             if (lockScreenTimeout) {
                 clearTimeout(lockScreenTimeout);
             }
             
-            // Hide after 3 seconds
+            // Hide after 2 seconds
             lockScreenTimeout = setTimeout(() => {
                 lockScreen.style.display = 'none';
-                if (examStarted) {
-                    enterFullscreen();
+                if (preventExit) {
                     window.focus();
                 }
-            }, 3000);
-            
-            // Force focus and fullscreen
-            window.focus();
-            enterFullscreen();
+            }, 2000);
         }
 
-        function overrideConsole() {
-            const methods = ['log', 'warn', 'error', 'info', 'debug', 'trace'];
-            methods.forEach(method => {
-                console[method] = function() {
-                    if (examStarted) {
-                        showLockScreen("Mencoba membuka Developer Tools!");
-                    }
-                };
-            });
-        }
-
-        function startDevToolsDetection() {
-            // Basic developer tools detection
-            setInterval(() => {
-                if (examStarted) {
-                    const threshold = 200;
-                    if (window.outerHeight - window.innerHeight > threshold || 
-                        window.outerWidth - window.innerWidth > threshold) {
-                        showLockScreen("Developer Tools terdeteksi!");
-                    }
-                }
-            }, 1000);
-            
-            // Console clear spam
-            setInterval(() => {
-                if (examStarted) {
-                    console.clear();
-                    console.log('%c🔒 UJIAN BERLANGSUNG - AKSES DITOLAK', 'color: red; font-size: 50px; font-weight: bold;');
-                }
-            }, 100);
-        }
-
-        // Disable right click on iframe load
-        document.getElementById('examFrame').addEventListener('load', function() {
-            try {
-                this.contentDocument.addEventListener('contextmenu', function(e) {
-                    e.preventDefault();
-                    showLockScreen("Context menu diblokir!");
-                    return false;
-                });
-            } catch(e) {
-                // Cross-origin restrictions
+        // Tambahan untuk mencegah select text (opsional)
+        document.addEventListener('selectstart', e => {
+            if (preventExit) {
+                e.preventDefault();
             }
         });
-
-        // Additional security measures
-        document.addEventListener('selectstart', e => e.preventDefault());
-        document.addEventListener('mousedown', e => {
-            if (e.button === 2) { // Right click
-                e.preventDefault();
-                showLockScreen("Right click diblokir!");
-            }
-        });
-
-        // Prevent zoom only, allow normal scroll
-        document.addEventListener('wheel', e => {
-            if (examStarted && e.ctrlKey) {
-                e.preventDefault();
-                showLockScreen("Zoom diblokir!");
-            }
-            // Normal scrolling is allowed
-        }, { passive: false });
     </script>
 </body>
 </html>
