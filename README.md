@@ -1,3 +1,4 @@
+<!DOCTYPE html>
 <html lang="id">
 <head>
     <meta charset="UTF-8">
@@ -287,6 +288,7 @@
                 this.startTime = 0;
                 this.timerInterval = null;
                 this.warningCount = 0;
+                this.fullscreenExitCount = 0;
                 this.isExamActive = false;
                 this.visibilityWarningShown = false;
                 
@@ -337,6 +339,13 @@
                 window.addEventListener('blur', () => {
                     if (this.isExamActive) {
                         this.handleTabSwitch();
+                    }
+                });
+
+                // Detect fullscreen exit
+                document.addEventListener('fullscreenchange', () => {
+                    if (this.isExamActive && !document.fullscreenElement) {
+                        this.handleFullscreenExit();
                     }
                 });
 
@@ -449,6 +458,92 @@
                 }
             }
 
+            handleFullscreenExit() {
+                this.fullscreenExitCount++;
+                this.logViolation(`Siswa keluar dari fullscreen (Pelanggaran ke-${this.fullscreenExitCount})`);
+                
+                if (this.fullscreenExitCount <= 3) {
+                    // Show warning and force back to fullscreen
+                    this.showFullscreenWarning();
+                    
+                    // Force back to fullscreen after 2 seconds
+                    setTimeout(() => {
+                        if (document.documentElement.requestFullscreen) {
+                            document.documentElement.requestFullscreen().catch(() => {
+                                console.log('Tidak bisa kembali ke fullscreen');
+                            });
+                        }
+                    }, 2000);
+                } else {
+                    // More than 3 attempts - logout and restart
+                    alert('🚨 TERLALU BANYAK PELANGGARAN!\n\nAnda telah keluar dari fullscreen lebih dari 3 kali.\nUjian akan direset dan harus dimulai dari awal.');
+                    this.resetExam();
+                }
+            }
+
+            showFullscreenWarning() {
+                const warningMsg = `⚠️ PERINGATAN ${this.fullscreenExitCount}/3\n\nAnda telah keluar dari mode fullscreen!\nSistem akan mengembalikan ke fullscreen dalam 2 detik...\n\nPeringatan tersisa: ${3 - this.fullscreenExitCount}`;
+                
+                // Update warning overlay content
+                const warningOverlay = document.getElementById('warningOverlay');
+                const warningContent = warningOverlay.querySelector('.warning-content');
+                warningContent.innerHTML = `
+                    <h2>⚠️ PERINGATAN ${this.fullscreenExitCount}/3</h2>
+                    <p>Anda telah keluar dari mode fullscreen!<br>
+                    Sistem akan mengembalikan ke fullscreen dalam 2 detik...<br><br>
+                    <strong>Peringatan tersisa: ${3 - this.fullscreenExitCount}</strong></p>
+                `;
+                
+                warningOverlay.style.display = 'flex';
+                
+                // Hide after 3 seconds
+                setTimeout(() => {
+                    warningOverlay.style.display = 'none';
+                    // Restore original warning content
+                    warningContent.innerHTML = `
+                        <h2>⚠️ PERINGATAN!</h2>
+                        <p>Anda mencoba keluar dari halaman ujian!<br>
+                        Tindakan ini akan dicatat dan dilaporkan ke pengawas.<br><br>
+                        <strong>Kembali ke ujian sekarang!</strong></p>
+                    `;
+                }, 3000);
+            }
+
+            resetExam() {
+                // Stop exam
+                this.isExamActive = false;
+                this.warningCount = 0;
+                this.fullscreenExitCount = 0;
+                
+                if (this.timerInterval) {
+                    clearInterval(this.timerInterval);
+                }
+
+                // Exit fullscreen
+                if (document.exitFullscreen) {
+                    document.exitFullscreen();
+                }
+
+                // Re-enable text selection
+                document.body.style.userSelect = 'auto';
+                document.body.style.cursor = 'auto';
+
+                // Reset UI
+                document.getElementById('timer').textContent = '00:00:00';
+                document.getElementById('timer').className = 'timer';
+                document.getElementById('googleForm').src = '';
+                
+                // Show setup modal again
+                document.getElementById('setupModal').classList.remove('hidden');
+                
+                // Reset form values
+                document.getElementById('examTitle').value = 'Ujian Matematika - Kelas X';
+                document.getElementById('examDuration').value = '60';
+                document.getElementById('googleFormUrl').value = 'https://docs.google.com/forms/d/e/1FAIpQLSe_example_form_id/viewform?embedded=true';
+
+                console.log('🔄 Ujian direset - harus dimulai dari awal');
+            }
+
             handleTabSwitch() {
                 this.warningCount++;
                 this.logViolation(`Siswa berganti tab/window (Pelanggaran ke-${this.warningCount})`);
@@ -510,7 +605,7 @@
                 // Optional: Redirect to completion page
                 // window.location.href = 'completion.html';
                 
-                console.log('✅ Ujian selesai. Total pelanggaran:', this.warningCount);
+                console.log('✅ Ujian selesai. Total pelanggaran tab/window:', this.warningCount, '| Pelanggaran fullscreen:', this.fullscreenExitCount);
             }
         }
 
